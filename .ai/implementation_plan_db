@@ -1,0 +1,129 @@
+# Implementation Plan - Scalable MySQL Auth with RBAC
+
+Convert the current backend to use MySQL and implement a robust, scalable authentication/authorization system using JWT Refresh Tokens and Role-Based Access Control (RBAC).
+
+## User Review Required
+
+> [!IMPORTANT]
+> - We are switching from PostgreSQL to MySQL. Ensure you have a MySQL instance available.
+> - The role system is designed to be granular (Roles + Permissions) to support future extensibility as requested.
+
+## Proposed Changes
+
+### Database & Prisma
+
+#### [MODIFY] [schema.prisma](file:///c:/mundrisoft/demo/fullstack/server/prisma/schema.prisma)
+- Change datasource provider to `mysql`.
+- **Proposed Scalable Schema**:
+  ```prisma
+  model User {
+    id            String         @id @default(uuid())
+    email         String         @unique
+    password      String
+    name          String?
+    is_active     Boolean        @default(true)
+    roles         UserRole[]
+    refreshTokens RefreshToken[]
+    resetTokens   PasswordResetToken[]
+    created_at    DateTime       @default(now())
+    updated_at    DateTime       @updatedAt
+  }
+
+  model Role {
+    id          String           @id @default(uuid())
+    name        String           @unique // SUPER_ADMIN, SUPPORT_ADMIN, WEBSITE_USER
+    description String?
+    permissions RolePermission[]
+    users       UserRole[]
+  }
+
+  model Permission {
+    id          String           @id @default(uuid())
+    name        String           @unique // e.g., "manage_users", "view_admin_panel"
+    description String?
+    roles       RolePermission[]
+  }
+
+  model UserRole {
+    user_id String
+    role_id String
+    user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    role    Role   @relation(fields: [role_id], references: [id], onDelete: Cascade)
+    @@id([user_id, role_id])
+  }
+
+  model RolePermission {
+    role_id       String
+    permission_id String
+    role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+    permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+    @@id([role_id, permission_id])
+  }
+
+  model RefreshToken {
+    id         String   @id @default(uuid())
+    token      String   @unique @db.VarChar(500)
+    user_id    String
+    user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    expires_at DateTime
+    revoked_at DateTime?
+    created_at DateTime @default(now())
+  }
+
+  model PasswordResetToken {
+    id         String   @id @default(uuid())
+    token      String   @unique
+    user_id    String
+    user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    expires_at DateTime
+    created_at DateTime @default(now())
+  }
+  ```
+
+
+### Authentication & Security
+
+#### [NEW] Authentication Service
+- **Signup**: User registration with default 'WEBSITE_USER' role.
+- **Signin**: Issue Access Token (short-lived) and Refresh Token (long-lived, stored in DB).
+- **Logout**: Revoke Refresh Token from DB.
+- **Forgot/Reset Password**: Implement token-based password reset flow (using `PasswordResetToken` model).
+
+#### [NEW] Security Middleware
+- **JWT Verification**: Validate access tokens.
+- **RBAC Middleware**: Check if user has required role/permission for specific routes.
+- **Input Validation**: Use `zod` for all request payloads.
+- **Rate Limiting**: Prevent brute force on auth endpoints.
+
+### File Structure Changes
+
+#### [MODIFY] [implementation_plan.md](file:///c:/mundrisoft/demo/fullstack/server/.ai/implementation_plan.md)
+Update the high-level plan to reflect MySQL and the new auth focus.
+
+## Phase 1 Execution Steps
+
+1. **Database Migration**:
+   - Update `schema.prisma` for MySQL.
+   - Define `User`, `Role`, `Permission`, `RefreshToken` models.
+   - Run `npx prisma migrate dev` to sync with MySQL.
+   - Seed initial roles (`SUPER_ADMIN`, `SUPPORT_ADMIN`, `WEBSITE_USER`).
+
+2. **Auth Implementation**:
+   - Setup `jsonwebtoken` for token signing.
+   - Implement `AuthService` (hash passwords with `bcrypt`).
+   - Create `AuthController` with endpoints: `/signup`, `/signin`, `/logout`, `/refresh-token`, `/forgot-password`, `/reset-password`.
+
+3. **RBAC & Security**:
+   - Implement `auth` and `checkRole` middlewares.
+   - Setup global error handling and `zod` validation.
+
+## Verification Plan
+
+### Automated Tests
+- Test Signup/Signin flow with Jest.
+- Verify token rotation (Refresh Token usage).
+- Test Role-based route access (e.g., SUPPORT_ADMIN cannot access SUPER_ADMIN routes).
+
+### Manual Verification
+- Use Postman/Insomnia to test the full auth lifecycle.
+- Verify MySQL tables are correctly populated and related.
