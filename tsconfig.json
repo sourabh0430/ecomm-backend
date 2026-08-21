@@ -1,20 +1,29 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "Node16",
-    "lib": ["ES2022"],
-
+    "module": "NodeNext",
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "sourceMap": true
   },
-  "include": ["src/**/*", "prisma.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*.ts",
+    "knexfile.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

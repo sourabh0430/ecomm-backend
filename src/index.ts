@@ -1,36 +1,43 @@
-import express, { Express, Request, Response } from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import cookieParser from "cookie-parser";
+import "dotenv/config";
 
-dotenv.config();
+import app from "./app";
+import { env } from "./config/env";
+import db from "./config/database";
 
-const app: Express = express();
-const port = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
-  credentials: true,
-}));
-app.use(helmet());
-app.use(morgan("dev"));
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-
-
-
-// Basic Route
-app.get("/", (req: Request, res: Response) => {
-  res.send("MERN Stack Learning Platform API");
+const server = app.listen(env.port, () => {
+  console.log(`Server running on port ${env.port}`);
 });
 
-// Start Server
-app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
-});
+
+let isShutdown = false;
+const shutdown = async (signal: string) => {
+
+  if (isShutdown) {
+    return;
+  }
+  isShutdown = true;
+
+  console.log(`${signal} received, Shutting down the server...`);
+
+  const forceShutdownTimer = setTimeout(() => {
+    console.log("Force shutdown");
+    process.exit(1);
+  }, 30_000)
+
+
+  server.close(async () => {
+    console.log("Server Closed...");
+
+    try {
+      await db.destroy();
+      clearTimeout(forceShutdownTimer);
+      process.exit(0);
+    } catch (err) {
+      console.log(err);
+      process.exit(1);
+    }
+  });
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
