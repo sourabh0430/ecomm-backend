@@ -7,11 +7,11 @@
     "dev": "tsx watch src/index.ts",
     "build": "rimraf dist && tsc",
     "start": "node dist/src/index.js",
-    "db:migrate": "knex migrate:latest --knexfile knexfile.ts",
-    "db:rollback": "knex migrate:rollback --knexfile knexfile.ts",
-    "db:status": "knex migrate:status --knexfile knexfile.ts",
-    "db:migration": "knex migrate:make --knexfile knexfile.ts",
-    "db:seeds": "knex seed:run --knexfile knexfile.ts"
+    "db:migrate": "knex migrate:latest --knexfile src/config/knexfile.ts",
+    "db:rollback": "knex migrate:rollback --knexfile src/config/knexfile.ts",
+    "db:status": "knex migrate:status --knexfile src/config/knexfile.ts",
+    "db:migration": "knex migrate:make --knexfile src/config/knexfile.ts",
+    "db:seeds": "knex seed:run --knexfile src/config/knexfile.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,5 @@
 import type { Knex } from "knex";
+import path from "path";
 import { env } from "./env";
 
 const config: { [key: string]: Knex.Config } = {
@@ -16,12 +17,16 @@ const config: { [key: string]: Knex.Config } = {
             max: 10,
         },
         migrations: {
-            directory: './src/database/migrations',
+            directory: path.resolve(__dirname, '../database/migrations'),
+            extension: "ts",
+            tableName: "knex_migrations"
         },
         seeds: {
-            directory: './src/database/seeds',
+            directory: path.resolve(__dirname, '../database/seeds'),
+            extension: "ts",
         },
     }
 }
 
 export const knexConfig = config[env.nodeEnv];
+export default config;
