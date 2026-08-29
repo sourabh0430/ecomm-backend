@@ -1,26 +1,18 @@
 import express from "express";
-import db from "./config/database";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger/swagger.config";
+import authRoutes from "./modules/auth/auth.routes";
 
 const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
-app.get('/health', async (_req, res) => {
-
-    try {
-        await db.raw("SELECT 1");
-        res.status(200).json({
-            success: true,
-            message: "E-Commerce API is Live"
-        })
-    } catch (err) {
-        return res.status(500).json({
-            success: false,
-            message: "Database is not connected"
-        })
-    }
+// Swagger UI Router
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
-})
+// API Routes
+app.use("/api/v1/auth", authRoutes)
+
 
 export default app;
