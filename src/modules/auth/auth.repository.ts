@@ -50,4 +50,29 @@ export class AuthRepository {
                 password_hash: identityData.passwordHash,
             });
     }
+
+    // Find a user by their email address
+    static async findByEmail(
+        email: string,
+        trx?: Knex.Transaction
+    ): Promise<UserRecord | undefined> {
+        const query = (trx || db)('users')
+            .where('email', email)
+            .first();
+
+        return query;
+    }
+
+    // Find the credentials record for a specific user ID and identity provider
+    static async findIdentityByUserId(
+        userId: string,
+        provider: string = "password",
+        trx?: Knex.Transaction,
+
+    ) {
+        return (trx || db)("user_identities")
+            .where("user_id", userId)
+            .andWhere("provider", provider)
+            .first();
+    }
 }

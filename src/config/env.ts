@@ -10,4 +10,8 @@ export const env = {
         user: process.env.DB_USER ?? 'sourabhjain',
         password: process.env.DB_PASSWORD ?? 'root',
     },
+    jwt: {
+        jwt_secret_key: process.env.JWT_SECRET_KEY || "ecomm_backend_secret_key",
+        jwt_expires_time: process.env.JWT_EXPIRES_IN || '1h',
+    }
 }

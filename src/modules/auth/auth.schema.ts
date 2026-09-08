@@ -25,4 +25,17 @@ export const registerUserSchema = z.object({
 
 });
 
+
+export const loginUserSchema = z.object({
+    email: z.string()
+        .email("Invalid email address")
+        .max(150, "Email cannot be longer than 150 characters"),
+
+    password: z.string()
+        .min(6, "Password must be at least 6 characters long")
+        .max(100, "Password cannot be longer than 100 characters")
+
+});
+
 export type RegisterUserInput = z.infer<typeof registerUserSchema>
+export type LoginUserInput = z.infer<typeof loginUserSchema>

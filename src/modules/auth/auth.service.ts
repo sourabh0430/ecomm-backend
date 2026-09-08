@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
 import db from "../../config/database";
 import { AuthRepository } from "./auth.repository";
-import { RegisterUserInput } from "./auth.schema";
+import { RegisterUserInput, LoginUserInput } from "./auth.schema";
 import { UserRecord } from "./auth.types";
+import jwt from "jsonwebtoken";
+import { env } from "../../config/env";
 
 export class AuthService {
     // Handle user registration
@@ -40,5 +42,44 @@ export class AuthService {
         });
 
         return newUser;
+    }
+
+    //Handle user login and JWT generation
+    static async loginUser(
+        input: LoginUserInput
+    ): Promise<{ user: UserRecord; token: string }> {
+        const { email, password } = input;
+
+        //verfiy user exists
+        const user = await AuthRepository.findByEmail(email);
+        if (!user) {
+            throw new Error("Invalid Credentials");
+        }
+
+        //fetch the strored credentials (password)
+        const identity = await AuthRepository.findIdentityByUserId(user.id, "password");
+        if (!identity || !identity.password_hash) {
+            throw new Error("Invalid credentials");
+        }
+
+        //compare submitted password with hash
+        const isPasswordValid = await bcrypt.compare(password, identity.password_hash);
+        if (!isPasswordValid) {
+            throw new Error("Invalid Credentials");
+        }
+
+        //Generate JWT token
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                role: user.role_id,
+            },
+            env.jwt.jwt_secret_key,
+            {
+                expiresIn: env.jwt.jwt_expires_time as any
+            }
+        );
+        return { user, token };
     }
 }
